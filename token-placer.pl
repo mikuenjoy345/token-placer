@@ -91,6 +91,7 @@ get '/sh/:short' => sub ($c) {
 			}
 		}
 		close $fh;
+		return $c->render(text => "Sorry.");
 	}
 };
 
