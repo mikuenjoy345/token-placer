@@ -1,0 +1,6 @@
+#!/bin/sh
+export TOKEN_HOSTNAME=token.jjakke.com              # needs to be set or shortener wont work right, proxy pass to 127.0.0.1:token_port
+export TOKEN_PORT=3043
+export MOJO_LISTEN=http://127.0.0.1:$TOKEN_PORT
+
+morbo ./token-placer.pl

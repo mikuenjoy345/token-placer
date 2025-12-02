@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Token Placer</title>
+	<!--<link href="/style.css" rel="stylesheet" type="text/css" media="all">-->
+</head>
+<body>
+<main role="main" class="block">
+<%= content %>
+</main>
+</body>
+</html>

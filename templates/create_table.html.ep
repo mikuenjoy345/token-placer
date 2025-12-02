@@ -1,0 +1,232 @@
+<style>
+	table.fixed {
+		border-collapse: collapse;
+		margin: 0;
+		padding: 0;
+		width: <%= $cols * 51 %>px;
+		table-layout: fixed;
+	}
+	table.fixed th, td {
+		width: 51px;
+		height: 51px;
+		border: 1px solid #ccc;
+		overflow: hidden;
+		margin: 0;
+		padding: 0;
+		white-space: nowrap;
+	}
+
+	table.fixed img {
+		width: 50px;
+		height: 50px;
+		overflow: hidden;
+	}
+
+	.wrapper {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+	}
+
+</style>
+
+<table class="fixed">
+	<thead x-data-cols="<%= $cols %>" x-data-rows="<%= $rows %>">
+		<tr>
+			<th></th>
+%			for (my $i = 0; $i != $cols; $i++) {
+			<th>
+				<%= $alphabet_array->[$i] %>
+			</th>
+%			}
+		</tr>
+	</thead>
+	<tbody>
+%		for (my $i = 0; $i != $rows; $i++) {
+		<tr>
+			<th>
+			<%= $i+1 %>
+			</th>
+%			for (my $f = 0; $f != $cols; $f++) {
+				<td id="<%= $alphabet_array->[$f] . '_' . ($i+1) %>">
+				</td>
+%			}
+		</tr>
+%		}
+	</tbody>
+</table>
+
+<input type="Submit" value="Share Room" id="share_room" name="share_room">
+<div id="div_share_room" name="div_share_room"></div>
+<br>
+<form>
+	<input type="Submit" value="New Room">
+</form>
+
+<form>
+	<div>
+		<input type="radio" id="nothing" name="token" value="nothing" checked />
+		<label for="nothing">Nothing / Erase</label>
+	</div>
+	<div class="wrapper">
+%		opendir my $dh, './public/img/tokens';
+%		my @tokens = readdir $dh;
+%		@tokens = sort { $b cmp $a } @tokens;
+%		while (my $f = pop @tokens) {
+%			next if $f eq '.' or $f eq '..';
+		<div>
+			<input type="radio" id="<%= $f %>" name="token" value="<%= $f %>" />
+			<label for="<%= $f %>"> <%= $f %> <img src="/img/tokens/<%= $f %>" width=50 height=50></label>
+		</div>
+%		}
+	</div>
+</form>
+
+<script>
+// Wait for the DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function () {
+	// Get all radio inputs with name 'token'
+	const tokenRadios = document.querySelectorAll('input[name="token"]');
+	// Get all table cells (td elements)
+	const cells = document.querySelectorAll('table.fixed td');
+
+	const share_room = document.getElementById('share_room')
+	const share_room_div	= document.getElementById('div_share_room')
+
+
+	share_room.addEventListener('click', async function () {
+		// Get grid dimensions from table headers
+		const cols = document.querySelector('thead').getAttribute('x-data-cols');
+		const rows = document.querySelector('thead').getAttribute('x-data-rows');
+
+		// Object to store cell contents
+		const cellData = {};
+
+		// Iterate through all cells to find those with images
+		cells.forEach(cell => {
+			const img = cell.querySelector('img');
+			if (img) {
+				// Extract cell ID (e.g., "A_1")
+				const cellId = cell.getAttribute('id');
+				// Extract image filename from src (everything after the last /)
+				const imgSrc = img.src;
+				const imgFilename = imgSrc.substring(imgSrc.lastIndexOf('/') + 1);
+
+				cellData[cellId] = imgFilename;
+			}
+		});
+
+		// Create URL parameters
+		let urlParams = `?cols=${cols}&rows=${rows}`;
+
+		// Add cell data to URL parameters
+		Object.keys(cellData).forEach(cellId => {
+			urlParams += `&${cellId}=${cellData[cellId]}`;
+		});
+
+		// Get current URL and append parameters
+		const currentUrl = window.location.origin + window.location.pathname;
+		const shareableUrl = currentUrl + urlParams;
+
+		// bitch, shorten that shit
+		try {
+			const response = await fetch('/short', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ url: shareableUrl })
+			});
+
+			const data = await response.json();
+			console.log(data);
+			if (data.data && data.data.short) {
+				share_room_div.innerHTML = `<p>Share this room (short): ${data.data.short}</p><!-- raw: ${shareableUrl} -->`;
+			} else {
+				share_room_div.innerHTML = `<p>Share this room (raw): ${shareableUrl}"</p>`;
+			}
+		} catch (error) {
+			console.error('Error shortening URL:', error);
+			share_room_div.innerHTML = `<p>Share this room (raw): ${shareableUrl}</p>`;
+		}
+
+		// Display the shareable URL in the div
+		/*const shortUrl(shareableUrl);
+		share_room_div.innerHTML = `<p>Share this room (raw): ${shareableUrl}"</p><p>Share this, actually: ${shortUrl}`;*/
+	});
+		
+	// Function to clear all images from cells
+	function clearAllImages() {
+		cells.forEach(cell => {
+			const img = cell.querySelector('img');
+			if (img) cell.removeChild(img);
+		});
+	}
+
+	function populateCellsFromUrl() {
+		// Get current URL parameters
+		const urlParams = new URLSearchParams(window.location.search);
+
+		// Clear existing images
+		clearAllImages();
+
+		// Iterate through all URL parameters
+		urlParams.forEach((value, key) => {
+			// Skip the cols and rows parameters
+			if (key === 'cols' || key === 'rows') {
+				return;
+			}
+
+			// Check if the key matches a cell ID (e.g., "A_1")
+			const cell = document.getElementById(key);
+			if (cell) {
+				// Create and set image
+				const img = document.createElement('img');
+				img.src = `/img/tokens/${value}`;
+				img.width = 50;
+				img.height = 50;
+				img.style.overflow = 'hidden';
+				cell.appendChild(img);
+			}
+		});
+	}
+
+	// Add click event listener to each radio button
+	tokenRadios.forEach(radio => {
+		radio.addEventListener('change', function () {
+			/*if (this.value === 'nothing') {
+				clearAllImages();
+				return;
+			}*/
+
+			// Get the selected token image path
+			var tokenSrc;
+			if (this.value === 'nothing') {
+			}
+			else {
+				tokenSrc = `/img/tokens/${this.value}`;
+			}
+
+			// Attach click listener to cells only after a token is selected
+			cells.forEach(cell => {
+				cell.onclick = function () {
+					// Clear existing image in this cell
+					const existingImg = this.querySelector('img');
+					if (existingImg) this.removeChild(existingImg);
+
+					if (tokenSrc) {
+						// Create and set new image
+						const img = document.createElement('img');
+						img.src = tokenSrc;
+						img.width = 50;
+						img.height = 50;
+						img.style.overflow = 'hidden';
+						this.appendChild(img);
+					}
+				};
+			});
+		});
+	});
+	populateCellsFromUrl();
+});
+</script>
+<p>AI Warning: Nearly all the JavaScript on this page was generated with AI.  If this makes you pee yourself, sorry.</p>

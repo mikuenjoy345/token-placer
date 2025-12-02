@@ -1,0 +1,36 @@
+<style>
+form.form-example {
+  display: table;
+}
+
+div.form-example {
+  display: table-row;
+}
+
+label,
+input {
+  display: table-cell;
+  margin-bottom: 10px;
+}
+
+label {
+  padding-right: 10px;
+}
+</style>
+
+<form action="/create_table" method="post" class="form-example">
+	<div class="form-example">
+		<label for="columns">Columns: </label>
+		<input type="number" name="columns" id="columns" required />
+	</div>
+	<div class="form-example">
+		<label for="rows">Rows: </label>
+		<input type="number" name="rows" id="rows" required />
+	</div>
+	<div>
+	</div>
+	<div class="form-example">
+		<input type="submit" value="Make Room" />
+	</div>
+</form>
+<p>(Good idea to make the room bigger than expected)</p>

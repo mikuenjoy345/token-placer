@@ -1,0 +1,65 @@
+<style>
+  table.fixed {
+  	border-collapse: collapse;
+	margin: 0;
+	padding: 0;
+	table-layout: fixed;
+  }
+  table.fixed th, td {
+    width: 50px;
+    height: 50px;
+    border: 1px solid #ccc;
+	overflow: hidden;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+  }
+
+  table.fixed img {
+  	width: 50px;
+	height: 50px;
+	overflow: hidden;
+  }
+</style>
+
+<table class="fixed">
+  <thead>
+    <tr>
+      <th></th>
+      <th>A</th><th>B</th><th>C</th><th>D</th>
+      <th>E</th><th>F</th><th>G</th><th>H</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th><td><img src="/img/tokens/lain-dancing.gif"></td><td><img src="/img/tokens/red7.png"></td><td><img src="/img/tokens/red-dragon.png"></td><td></td><td></td><td></td><td><img src="/img/tokens/skyrim-orc.png"></td><td></td>
+    </tr>
+    <tr>
+      <th>2</th><td></td><td><img src="/img/tokens/neco-arc.png"></td><td><img src="/img/tokens/nootnoot.png"></td><td></td><td></td><td></td><td></td><td></td>
+    </tr>
+    <tr>
+      <th>3</th><td><img src="/img/tokens/elf-girl.png"></td><td><img src="/img/tokens/hologram.png"></td><td><img src="/img/tokens/rob.png"></td><td><img src="/img/tokens/best-girl.png"></td><td><img src="/img/tokens/killer-bean.png"></td><td><img src="/img/tokens/anya.png"></td><td><img src="/img/tokens/sailor-moon.png"></td><td></td>
+    </tr>
+    <tr>
+      <th>4</th><td><img src="/img/tokens/dracula.png"></td><td></td><td></td><td></td><td><img src="/img/tokens/reimu.png"></td><td></td><td></td><td></td>
+    </tr>
+    <tr>
+      <th>5</th><td><img src="/img/tokens/lain.png"></td><td><img src="/img/tokens/vegeta.png"></td><td></td><td></td><td></td><td><img src="/img/tokens/car.png"></td><td></td><td><img src="/img/tokens/bleach.png"></td>
+    </tr>
+    <tr>
+      <th>6</th><td></td><td></td><td><img src="/img/tokens/doom-guy.png"></td><td></td><td></td><td><img src="/img/tokens/tom.png"></td><td></td><td></td>
+    </tr>
+    <tr>
+      <th>7</th><td><img src="/img/tokens/naruto.png"></td><td></td><td></td><td></td><td><img src="/img/tokens/yellow9.png"></td><td></td><td></td><td><img src="/img/tokens/green3.png"></td>
+    </tr>
+    <tr>
+      <th>8</th><td><img src="/img/tokens/gondola.png"></td><td><img src="/img/tokens/kamen-rider.png"></td><td><img src="/img/tokens/guy1.png"></td><td></td><td><img src="/img/tokens/guts.png"></td><td></td><td><img src="/img/tokens/fumo.png"></td><td></td>
+    </tr>
+    <tr>
+      <th>9</th><td></td><td><img src="/img/tokens/mcdonalds.png"></td><td><img src="/img/tokens/pika.png"></td><td></td><td></td><td></td><td><img src="/img/tokens/teal4.png"></td><td></td>
+    </tr>
+    <tr>
+      <th>10</th><td></td><td></td><td><img src="/img/tokens/rally.png"></td><td><img src="/img/tokens/minnie.png"></td><td></td><td></td><td></td><td><img src="/img/tokens/pepe.png"></td>
+    </tr>
+  </tbody>
+</table>
