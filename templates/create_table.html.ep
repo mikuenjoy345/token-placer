@@ -286,7 +286,13 @@ async function loop() {
 	catch (error) {
 		console.log(error);
 	}
-	setTimeout(function() { loop() }, 1000); // 1 second
+
+	if (document.hasFocus()) {
+		setTimeout(function() { loop() }, 1000); // 1 second
+	}
+	else {
+		setTimeout(function() { loop() }, 7000); // 7 seconds
+	}
 }
 
 loop(1);
