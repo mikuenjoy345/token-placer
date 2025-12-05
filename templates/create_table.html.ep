@@ -29,7 +29,7 @@
 
 </style>
 
-<table class="fixed">
+<table id="the_table" class="fixed" x-data-md5="<%= $md5 %>">
 	<thead x-data-cols="<%= $cols %>" x-data-rows="<%= $rows %>">
 		<tr>
 			<th></th>
@@ -61,6 +61,7 @@
 <form>
 	<input type="Submit" value="New Room">
 </form>
+<!--<input type="Submit" id="loop" value="Loop">-->
 
 <form>
 	<div>
@@ -83,7 +84,11 @@
 
 <script>
 // Wait for the DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', bigFunction() );
+
+var event_listeners_added = false;
+
+function bigFunction () {
 	// Get all radio inputs with name 'token'
 	const tokenRadios = document.querySelectorAll('input[name="token"]');
 	// Get all table cells (td elements)
@@ -92,67 +97,76 @@ document.addEventListener('DOMContentLoaded', function () {
 	const share_room = document.getElementById('share_room')
 	const share_room_div	= document.getElementById('div_share_room')
 
+	// TODO comment this out
+	//const the_loop = document.getElementById("loop")
+	//if (!event_listeners_added) {
+//		the_loop.addEventListener('click', function() { loop() });
+//	}
 
-	share_room.addEventListener('click', async function () {
-		// Get grid dimensions from table headers
-		const cols = document.querySelector('thead').getAttribute('x-data-cols');
-		const rows = document.querySelector('thead').getAttribute('x-data-rows');
+	if (!event_listeners_added) {
+		share_room.addEventListener('click', async function () {
+			// Get grid dimensions from table headers
+			const cols = document.querySelector('thead').getAttribute('x-data-cols');
+			const rows = document.querySelector('thead').getAttribute('x-data-rows');
 
-		// Object to store cell contents
-		const cellData = {};
+			// Object to store cell contents
+			const cellData = {};
 
-		// Iterate through all cells to find those with images
-		cells.forEach(cell => {
-			const img = cell.querySelector('img');
-			if (img) {
-				// Extract cell ID (e.g., "A_1")
-				const cellId = cell.getAttribute('id');
-				// Extract image filename from src (everything after the last /)
-				const imgSrc = img.src;
-				const imgFilename = imgSrc.substring(imgSrc.lastIndexOf('/') + 1);
+			// Iterate through all cells to find those with images
+			cells.forEach(cell => {
+				const img = cell.querySelector('img');
+				if (img) {
+					// Extract cell ID (e.g., "A_1")
+					const cellId = cell.getAttribute('id');
+					// Extract image filename from src (everything after the last /)
+					const imgSrc = img.src;
+					const imgFilename = imgSrc.substring(imgSrc.lastIndexOf('/') + 1);
 
-				cellData[cellId] = imgFilename;
-			}
-		});
-
-		// Create URL parameters
-		let urlParams = `?cols=${cols}&rows=${rows}`;
-
-		// Add cell data to URL parameters
-		Object.keys(cellData).forEach(cellId => {
-			urlParams += `&${cellId}=${cellData[cellId]}`;
-		});
-
-		// Get current URL and append parameters
-		const currentUrl = window.location.origin + window.location.pathname;
-		const shareableUrl = currentUrl + urlParams;
-
-		// bitch, shorten that shit
-		try {
-			const response = await fetch('/short', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ url: shareableUrl })
+					cellData[cellId] = imgFilename;
+				}
 			});
 
-			const data = await response.json();
-			console.log(data);
-			if (data.data && data.data.short) {
-				share_room_div.innerHTML = `<p>Share this room (short): ${data.data.short}</p><!-- raw: ${shareableUrl} -->`;
-			} else {
-				share_room_div.innerHTML = `<p>Share this room (raw): ${shareableUrl}"</p>`;
-			}
-		} catch (error) {
-			console.error('Error shortening URL:', error);
-			share_room_div.innerHTML = `<p>Share this room (raw): ${shareableUrl}</p>`;
-		}
+			// Create URL parameters
+			let urlParams = `?cols=${cols}&rows=${rows}`;
 
-		// Display the shareable URL in the div
-		/*const shortUrl(shareableUrl);
-		share_room_div.innerHTML = `<p>Share this room (raw): ${shareableUrl}"</p><p>Share this, actually: ${shortUrl}`;*/
-	});
+			// Add cell data to URL parameters
+			Object.keys(cellData).forEach(cellId => {
+				urlParams += `&${cellId}=${cellData[cellId]}`;
+			});
+
+			// Get current URL and append parameters
+			const currentUrl = window.location.origin + window.location.pathname;
+			const shareableUrl = currentUrl + urlParams;
+
+			// bitch, shorten that shit
+			const oldMd5 = document.getElementById('the_table').getAttribute('x-data-md5');
+			try {
+				const response = await fetch('/short', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ url: shareableUrl, old: oldMd5 })
+				});
+
+				const data = await response.json();
+				console.log(data);
+				if (data.data && data.data.short) {
+					share_room_div.innerHTML = `<p>Share this room (short): ${data.data.short}</p><!-- raw: ${shareableUrl} -->`;
+					updateMD5(data.data.md5)
+				} else {
+					share_room_div.innerHTML = `<p>Share this room (raw): ${shareableUrl}"</p>`;
+				}
+			} catch (error) {
+				console.error('Error shortening URL:', error);
+				share_room_div.innerHTML = `<p>Share this room (raw): ${shareableUrl}</p>`;
+			}
+
+			// Display the shareable URL in the div
+			/*const shortUrl(shareableUrl);
+			share_room_div.innerHTML = `<p>Share this room (raw): ${shareableUrl}"</p><p>Share this, actually: ${shortUrl}`;*/
+		});
+	}
 		
 	// Function to clear all images from cells
 	function clearAllImages() {
@@ -175,6 +189,9 @@ document.addEventListener('DOMContentLoaded', function () {
 			if (key === 'cols' || key === 'rows') {
 				return;
 			}
+			if (key === 'md5_sum') {
+				updateMD5(value);
+			}
 
 			// Check if the key matches a cell ID (e.g., "A_1")
 			const cell = document.getElementById(key);
@@ -190,43 +207,88 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 
+	function updateMD5(md5) {
+		const table = document.getElementById("the_table");
+		table.setAttribute("x-data-md5", md5);
+	}
+
 	// Add click event listener to each radio button
-	tokenRadios.forEach(radio => {
-		radio.addEventListener('change', function () {
-			/*if (this.value === 'nothing') {
-				clearAllImages();
-				return;
-			}*/
+	if (!event_listeners_added) {
+		tokenRadios.forEach(radio => {
+			radio.addEventListener('change', function () {
+				/*if (this.value === 'nothing') {
+					clearAllImages();
+					return;
+				}*/
 
-			// Get the selected token image path
-			var tokenSrc;
-			if (this.value === 'nothing') {
-			}
-			else {
-				tokenSrc = `/img/tokens/${this.value}`;
-			}
+				// Get the selected token image path
+				var tokenSrc;
+				if (this.value === 'nothing') {
+				}
+				else {
+					tokenSrc = `/img/tokens/${this.value}`;
+				}
 
-			// Attach click listener to cells only after a token is selected
-			cells.forEach(cell => {
-				cell.onclick = function () {
-					// Clear existing image in this cell
-					const existingImg = this.querySelector('img');
-					if (existingImg) this.removeChild(existingImg);
+				// Attach click listener to cells only after a token is selected
+				cells.forEach(cell => {
+					cell.onclick = function () {
+						// Clear existing image in this cell
+						const existingImg = this.querySelector('img');
+						if (existingImg) this.removeChild(existingImg);
 
-					if (tokenSrc) {
-						// Create and set new image
-						const img = document.createElement('img');
-						img.src = tokenSrc;
-						img.width = 50;
-						img.height = 50;
-						img.style.overflow = 'hidden';
-						this.appendChild(img);
-					}
-				};
+						if (tokenSrc) {
+							// Create and set new image
+							const img = document.createElement('img');
+							img.src = tokenSrc;
+							img.width = 50;
+							img.height = 50;
+							img.style.overflow = 'hidden';
+							this.appendChild(img);
+						}
+					};
+				});
 			});
 		});
-	});
+	};
 	populateCellsFromUrl();
-});
+	event_listeners_added = true;
+}
+
+async function loop() {
+	const md5_sum = document.querySelector('table').getAttribute('x-data-md5');
+	//console.log(md5_sum);
+
+	try {
+		const response = await fetch(`/update/${md5_sum}`, {
+			method: 'GET',
+		});
+
+		const data = await response.json();
+		//console.log(data);
+		if (data.data) {
+			try {
+				const resp = await fetch(`/sh/${data.data}`, {
+					method: 'GET',
+				});
+		//		console.log('----------------------')
+		//		console.log(resp.url);
+				if (resp.url) {
+					window.history.pushState('token-placer', '', resp.url);
+					bigFunction();
+				}
+		//		console.log('----------------------')
+			}
+			catch (error) {
+				console.log(error);
+			}
+		}
+	}
+	catch (error) {
+		console.log(error);
+	}
+	setTimeout(function() { loop() }, 1000); // 1 second
+}
+
+loop(1);
 </script>
 <p>AI Warning: Nearly all the JavaScript on this page was generated with AI.  If this makes you pee yourself, sorry.</p>

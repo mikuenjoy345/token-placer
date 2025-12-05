@@ -3,6 +3,7 @@ use Mojolicious::Lite -signatures;
 use Mojo::Util qw(md5_sum);
 use Mojo::Cache;
 use JSON qw(from_json);
+use Smart::Comments;
 {
 	package TieAlphabet;
 	use strict;
@@ -26,7 +27,8 @@ use JSON qw(from_json);
 	1;
 }
 
-my $cache = Mojo::Cache->new(max_keys => 10);
+my $cache  = Mojo::Cache->new(max_keys => 10);
+my $update = Mojo::Cache->new(max_keys => 10);
 my @alphabet_array;
 tie @alphabet_array, 'TieAlphabet';
 
@@ -43,6 +45,9 @@ get '/create_table' => sub ($c) {
 	my $values = $c->req->params->to_hash;
 	$c->stash(cols => $values->{cols});
 	$c->stash(rows => $values->{rows});
+
+	$c->stash(md5 => $values->{md5_sum});
+
 	$c->stash(alphabet_array => \@alphabet_array);
 	$c->render(template => 'create_table');
 };
@@ -50,6 +55,7 @@ get '/create_table' => sub ($c) {
 post '/create_table' => sub ($c) {
 	my $cols = $c->param('columns');
 	my $rows = $c->param('rows');
+	my $md5 = $c->param('md5sum');
 	if (!($cols and $rows)) {
 		return $c->render(text => "No, this is broken, I think. Cols: $cols, Rows: $rows");
 	}
@@ -59,25 +65,41 @@ post '/create_table' => sub ($c) {
 	
 	$c->stash(cols => $cols);
 	$c->stash(rows => $rows);
+	$c->stash(md5 => $md5);
 	$c->stash(alphabet_array => \@alphabet_array);
 	$c->render(template => 'create_table');
 };
 
+# this gets called when someone clicks "Share Room"
 post '/short' => sub ($c) {
-	my $long_boi = %{ from_json($c->req->body)}{url}; # wuh..? what about errors.. ? # dgafs lmfao
+	my $json = from_json($c->req->body);
+	my $long_boi = $json->{url};
+	my $old_boi;
+	if (exists $json->{old} and $json->{old} ne 'undefined') {
+	  $old_boi = %{ from_json($c->req->body)}{old}; 
+	}
 	my $short = md5_sum $long_boi;
-	$c->render(json => {'data' => {'short' => "https://$ENV{TOKEN_HOSTNAME}/sh/" . $short}});
-	$cache->set($short => $long_boi);
+	$c->render(json => {'data' => {'short' => "https://$ENV{TOKEN_HOSTNAME}:$ENV{TOKEN_PORT}/sh/" . $short, 'md5' => $short }} );
+	$cache->set( $short => $long_boi);
+	$update->set($old_boi => $short) if $old_boi;
 	# now to create persistant short -> long_boi ...
 	open(my $fh, '>>', './short.txt') or die;
 	# TODO gzip this
 	say $fh "$short => $long_boi";
 	close $fh;
+	if ($old_boi) {
+		# TODO add a 'next' and 'back' buttons for this
+		open(my $fh, '>>', './update.txt') or die;
+		say $fh "$old_boi => $short";
+		# multiple people can 'Share Room' on the same md5sum which will be tricky to handle
+		# I'll figure it out later.
+		close $fh;
+	}
 };
 
 get '/sh/:short' => sub ($c) {
 	if ($cache->get($c->param('short') )) {
-		return $c->redirect_to($cache->get( $c->param("short") ));
+		return $c->redirect_to($cache->get( $c->param("short") ) . '&md5_sum=' . $c->param('short') );
 	}
 	else {
 		# TODO un-gzip this
@@ -86,13 +108,22 @@ get '/sh/:short' => sub ($c) {
 			my @line = split / => /, $line;
 			if ($line[0] eq $c->param('short')) {
 				chomp $line[1];
-				$c->redirect_to($line[1]);
+				chomp $line[0];
+				$c->redirect_to($line[1] . '&md5_sum=' . $line[0]);
 				last;
 			}
 		}
 		close $fh;
 		return $c->render(text => "Sorry.");
 	}
+};
+
+# this gets called auto-matically, by js.
+get '/update/:update' => sub ($c) {
+	my $i = $c->param('update');
+	$c->param('update') 
+		? return $c->render(json => {'data' => $update->get($i) })  # eventually leads to /sh/:short
+		: return $c->render(json => {'data' => undef});
 };
 
 app->start;
