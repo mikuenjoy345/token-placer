@@ -79,7 +79,7 @@ post '/short' => sub ($c) {
 	  $old_boi = %{ from_json($c->req->body)}{old}; 
 	}
 	my $short = md5_sum $long_boi;
-	$c->render(json => {'data' => {'short' => "https://$ENV{TOKEN_HOSTNAME}:$ENV{TOKEN_PORT}/sh/" . $short, 'md5' => $short }} );
+	$c->render(json => {'data' => {'short' => "https://$ENV{TOKEN_HOSTNAME}/sh/" . $short, 'md5' => $short }} );
 	$cache->set( $short => $long_boi);
 	$update->set($old_boi => $short) if $old_boi;
 	# now to create persistant short -> long_boi ...
