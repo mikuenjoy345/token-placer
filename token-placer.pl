@@ -3,7 +3,7 @@ use Mojolicious::Lite -signatures;
 use Mojo::Util qw(md5_sum);
 use Mojo::Cache;
 use JSON qw(from_json);
-use Smart::Comments;
+#use Smart::Comments;
 {
 	package TieAlphabet;
 	use strict;
@@ -33,7 +33,7 @@ my @alphabet_array;
 tie @alphabet_array, 'TieAlphabet';
 
 get '/' => sub ($c) {
-  $c->render(template => 'index');
+  $c->redirect_to('/create_table');
 };
 
 any '/field' => sub ($c) {
