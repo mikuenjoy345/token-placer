@@ -138,7 +138,7 @@ function bigFunction () {
 			const currentUrl = window.location.origin + window.location.pathname;
 			const shareableUrl = currentUrl + urlParams;
 
-			// bitch, shorten that shit
+			// maiden, shorten that stinky stuff
 			const oldMd5 = document.getElementById('the_table').getAttribute('x-data-md5');
 			try {
 				const response = await fetch('/short', {
@@ -252,6 +252,17 @@ function bigFunction () {
 	};
 	populateCellsFromUrl();
 	event_listeners_added = true;
+
+	document.addEventListener('DOMContentLoaded', () => {
+		const table = document.getElementById('the_table');
+		table.addEventListener('contextmenu', (event) => {
+			// Check if the right-clicked element is an image within a table cell
+			if (event.target.tagName === 'IMG' && event.target.closest('td')) {
+				event.preventDefault(); // Prevent the default context menu
+				event.target.remove(); // Remove the image element
+			}
+		});
+	});
 }
 
 async function loop() {
