@@ -78,7 +78,7 @@ post '/short' => sub ($c) {
 	if (exists $json->{old} and $json->{old} ne 'undefined') {
 	  $old_boi = %{ from_json($c->req->body)}{old}; 
 	}
-	my $short = md5_sum $long_boi;
+	my $short = md5_sum $long_boi . time;
 	$c->render(json => {'data' => {'short' => "https://$ENV{TOKEN_HOSTNAME}/sh/" . $short, 'md5' => $short }} );
 	$cache->set( $short => $long_boi);
 	$update->set($old_boi => $short) if $old_boi;
